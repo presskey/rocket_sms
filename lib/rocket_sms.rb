@@ -31,8 +31,8 @@ module RocketSMS
 
   def start
     @pid = Process.pid
+    STDOUT.sync = true
     Smpp::Base.logger = self.logger
-    #Process.daemon
     gateway.start
   end
 
@@ -63,8 +63,6 @@ module RocketSMS
 
   def settings=(duck)
     @settings = symbolize_keys(duck.is_a?(Hash) ? duck : YAML.load(IO.read(duck)))
-    self.redis_url = @settings[:redis] && @settings[:redis][:url]
-    self.log_location = @settings[:log] && @settings[:log][:location]
   end
 
   def settings
@@ -80,16 +78,11 @@ module RocketSMS
   end
 
   def logger
-    @logger ||= Logger.new(log_location)
+    @logger ||= Logger.new(STDOUT)
   end
 
-  def log_location
-    @log_location ||= STDOUT
-  end
-
-  def log_location=(location)
-    log_location.sync = true if log_location.respond_to? :sync=
-    @log_location = location unless location.nil?
+  def logger=(new_logger)
+    @logger = new_logger
   end
 
   def symbolize_keys(hash)
